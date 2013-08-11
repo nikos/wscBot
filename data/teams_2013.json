@@ -1,0 +1,92 @@
+{"team": [
+    {
+        "team_name": "1. FC N\u00fcrnberg",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/1_FC_Nuernberg.gif",
+        "team_id": "79"
+    },
+    {
+        "team_name": "1. FSV Mainz 05",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/1_FSV_Mainz_05.gif",
+        "team_id": "81"
+    },
+    {
+        "team_name": "Bayer 04 Leverkusen",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/Bayer_Leverkusen.gif",
+        "team_id": "6"
+    },
+    {
+        "team_name": "Bayern M\u00fcnchen",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/Bayern_Muenchen.gif",
+        "team_id": "40"
+    },
+    {
+        "team_name": "Borussia M\u00f6nchengladbach",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/Bor_Moenchengladbach.gif",
+        "team_id": "87"
+    },
+    {
+        "team_name": "Borussia Dortmund",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/Borussia_Dortmund.gif",
+        "team_id": "7"
+    },
+    {
+        "team_name": "Eintracht Braunschweig",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/Eintracht_Braunschweig.gif",
+        "team_id": "74"
+    },
+    {
+        "team_name": "Eintracht Frankfurt",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/Eintracht_Frankfurt.gif",
+        "team_id": "91"
+    },
+    {
+        "team_name": "FC Augsburg",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/FC_Augsburg.gif",
+        "team_id": "95"
+    },
+    {
+        "team_name": "FC Schalke 04",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/FC_Schalke_04.gif",
+        "team_id": "9"
+    },
+    {
+        "team_name": "Hamburger SV",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/Hamburger_SV.gif",
+        "team_id": "100"
+    },
+    {
+        "team_name": "Hannover 96",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/Hannover_96.gif",
+        "team_id": "55"
+    },
+    {
+        "team_name": "Hertha BSC",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/Hertha_BSC.gif",
+        "team_id": "54"
+    },
+    {
+        "team_name": "SC Freiburg",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/SC_Freiburg.gif",
+        "team_id": "112"
+    },
+    {
+        "team_name": "VfB Stuttgart",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/VfB_Stuttgart.gif",
+        "team_id": "16"
+    },
+    {
+        "team_name": "VfL Wolfsburg",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/VfL_Wolfsburg.gif",
+        "team_id": "131"
+    },
+    {
+        "team_name": "Werder Bremen",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/werder_bremen.gif",
+        "team_id": "134"
+    },
+    {
+        "team_name": "TSG 1899 Hoffenheim",
+        "team_icon_url": "http://www.openligadb.de/images/teamicons/TSG_Hoffenheim.gif",
+        "team_id": "123"
+    }
+]}

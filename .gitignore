@@ -1,5 +1,13 @@
 *.py[cod]
 
+my_secrets.py
+test.py
+
+# IntelliJ IDEA project files
+*.ipr
+*.iws
+*.iml
+
 # C extensions
 *.so
 
