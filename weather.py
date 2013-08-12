@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 from datetime import datetime, time
 import logging
 
@@ -9,6 +12,7 @@ import my_secrets
 
 
 # ~~
+
 Base = declarative_base()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,7 +43,8 @@ class WeatherInfo(Base):
     retrieved_at = Column(DateTime, index=True)
 
     def __repr__(self):
-        return "<WeatherInfo('%s','%s', '%s')>" % (self.summary, self.temperature_cur, self.rain_3h)
+        return "<WeatherInfo('%s', T: %.1f C (min: %.1f C, max: %.1f C), H: %d%%, W: %.1f m/s)>" \
+               % (self.summary, self.temperature_cur, self.temperature_min, self.temperature_max, self.humidity, self.wind_speed)
 
     @staticmethod
     def getLatest(session, city, date):
@@ -54,6 +59,21 @@ class WeatherInfo(Base):
             .first()
 
     @staticmethod
+    def retrieveHistoricWeather(city, starttime, endtime):
+        params = {"q": "%s,Germany" % city, "units": "metric", "cnt": 1,
+                  "start": starttime.strftime("%s"), "end": endtime.strftime("%s")}
+        headers = {"x-api-key": my_secrets.OPENWEATHERMAP_API_KEY}
+
+        r = requests.get("http://api.openweathermap.org/data/2.5/history/city", params=params, headers=headers)
+        logger.info("--> [%s, %s] Response %s", city, starttime, r)
+        json = r.json()
+        #logger.info("Anz. Eintraege %d", len(json['list']))
+        if len(json['list']) > 0:
+            return convertOpenWeatherMap2WeatherInfo(city, json['list'][0], metric=False)
+        else:
+            return None
+
+    @staticmethod
     def retrieveCurrentWeather(city):
 
         params = {"q": "%s,Germany" % city, "units": "metric"}
@@ -62,22 +82,7 @@ class WeatherInfo(Base):
         r = requests.get("http://api.openweathermap.org/data/2.5/find", params=params, headers=headers)
         logger.info("Response", r)
         json = r.json()
-        logger.debug(json)
-
-        #json = {u'count': 1, u'message': u'accurate', u'list': [{u'clouds': {u'all': 75}, u'name': u'Hamburg', u'coord': {u'lat': 53.549999, u'lon': 10}, u'sys': {u'country': u'DE'}, u'weather': [{u'main': u'Clouds', u'id': 803, u'icon': u'04d', u'description': u'broken clouds'}], u'rain': {u'3h': 0.5}, u'dt': 1376211000, u'main': {u'pressure': 1016, u'temp_min': 15, u'temp_max': 20, u'temp': 17.35, u'humidity': 77}, u'id': 2911298, u'wind': {u'var_end': 290, u'var_beg': 220, u'speed': 5.7, u'deg': 260}}], u'cod': u'200'}
-        w = json['list'][0]
-
-        rain_3h = 0.0
-        if 'rain' in w:
-            rain_3h = w['rain']['3h']
-
-        return WeatherInfo(city=city, summary=w['weather'][0]['description'], icon=w['weather'][0]['icon'],
-                           rain_3h=rain_3h,
-                           temperature_cur=w['main']['temp'],
-                           temperature_min=w['main']['temp_min'], temperature_max=w['main']['temp_max'],
-                           pressure=w['main']['pressure'], humidity=w['main']['humidity'],
-                           wind_speed=w['wind']['speed'], wind_direction=w['wind']['deg'],
-                           weatherstation_timestamp=datetime.fromtimestamp(w['dt']), retrieved_at=datetime.now())
+        return convertOpenWeatherMap2WeatherInfo(city, json['list'][0])
 
     @staticmethod
     def updateCities(session, cities):
@@ -86,3 +91,43 @@ class WeatherInfo(Base):
             weather = WeatherInfo.retrieveCurrentWeather(city)
             logger.info("   %s ", weather)
             session.add(weather)
+
+# -- -- -- -- --
+
+
+def convertOpenWeatherMap2WeatherInfo(city, w, metric = True):
+    #json = {u'count': 1, u'message': u'accurate', u'list': [{u'clouds': {u'all': 75}, u'name': u'Hamburg', u'coord': {u'lat': 53.549999, u'lon': 10}, u'sys': {u'country': u'DE'}, u'weather': [{u'main': u'Clouds', u'id': 803, u'icon': u'04d', u'description': u'broken clouds'}], u'rain': {u'3h': 0.5}, u'dt': 1376211000, u'main': {u'pressure': 1016, u'temp_min': 15, u'temp_max': 20, u'temp': 17.35, u'humidity': 77}, u'id': 2911298, u'wind': {u'var_end': 290, u'var_beg': 220, u'speed': 5.7, u'deg': 260}}], u'cod': u'200'}
+    rain_3h = 0.0
+    if 'rain' in w:
+        if '3h' in w['rain']:
+            rain_3h = w['rain']['3h']
+        else:
+            logger.warn("rain has no 3h entry, but: %s", w['rain'])
+
+    if not metric:
+        w['main']['temp'] -= 273.15
+        w['main']['temp_min'] -= 273.15
+        w['main']['temp_max'] -= 273.15
+
+    return WeatherInfo(city=city, summary=w['weather'][0]['description'], icon=w['weather'][0]['icon'],
+                       rain_3h=rain_3h,
+                       temperature_cur=w['main']['temp'],
+                       temperature_min=w['main']['temp_min'],
+                       temperature_max=w['main']['temp_max'],
+                       pressure=w['main']['pressure'] if 'pressure' in w['main'] else 0.0,
+                       humidity=w['main']['humidity'] if 'humidity' in w['main'] else 0.0,
+                       wind_speed=w['wind']['speed'], wind_direction=w['wind']['deg'],
+                       weatherstation_timestamp=datetime.fromtimestamp(w['dt']), retrieved_at=datetime.now())
+
+
+if __name__ == '__main__':
+
+    # History DB seems to start 2-Oct-2012
+
+    starttime = datetime(2012, 10, 3, 12, 30, 0)
+    endtime = datetime(2012, 10, 3, 13, 30, 0)
+
+    for city in ['Hamburg', 'Berlin', 'München']:
+        w = WeatherInfo.retrieveHistoricWeather(city, starttime, endtime)
+        if w:
+            print w, "w: %s" % w.weatherstation_timestamp
