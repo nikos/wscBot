@@ -120,14 +120,15 @@ def convertOpenWeatherMap2WeatherInfo(city, w, metric = True):
                        weatherstation_timestamp=datetime.fromtimestamp(w['dt']), retrieved_at=datetime.now())
 
 
+# -----------------------------------------------------------------------------
+
 if __name__ == '__main__':
 
-    # History DB seems to start 2-Oct-2012
-
+    # History of OpenWeatherMap seems to start 3-Oct-2012
     starttime = datetime(2012, 10, 3, 12, 30, 0)
     endtime = datetime(2012, 10, 3, 13, 30, 0)
 
-    for city in ['Hamburg', 'Berlin', 'München']:
+    for city in ['Hamburg', 'Berlin', 'Freiburg']:
         w = WeatherInfo.retrieveHistoricWeather(city, starttime, endtime)
         if w:
-            print w, "w: %s" % w.weatherstation_timestamp
+            logger.info("Wetter in %s am %s: %s", city, w.weatherstation_timestamp, w)

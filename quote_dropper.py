@@ -38,7 +38,10 @@ team2city = {
     "VfB Stuttgart": "Stuttgart",
     "VfL Wolfsburg": "Wolfsburg",
     "Werder Bremen": "Bremen",
-    "TSG 1899 Hoffenheim": "Hoffenheim"
+    "TSG 1899 Hoffenheim": "Hoffenheim",
+    # Letzte Saison in 1. Liga
+    "SpVgg Greuther Fuerth": u"Fürth",
+    u"Fortuna Düsseldorf": u"Düsseldorf"
 }
 
 
