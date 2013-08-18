@@ -3,13 +3,15 @@
 
 from datetime import datetime, time
 import logging
+from optparse import OptionParser
 
 import requests
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, DateTime, desc
 
 import my_secrets
-
 
 # ~~
 
@@ -124,11 +126,26 @@ def convertOpenWeatherMap2WeatherInfo(city, w, metric = True):
 
 if __name__ == '__main__':
 
-    # History of OpenWeatherMap seems to start 3-Oct-2012
-    starttime = datetime(2012, 10, 3, 12, 30, 0)
-    endtime = datetime(2012, 10, 3, 13, 30, 0)
+    parser = OptionParser()
+    parser.add_option("-u", "--update",
+                      action="store_true", dest="update", default=False,
+                      help="update the current weather for all cities")
+    (options, args) = parser.parse_args()
 
-    for city in ['Hamburg', 'Berlin', 'Freiburg']:
-        w = WeatherInfo.retrieveHistoricWeather(city, starttime, endtime)
-        if w:
-            logger.info("Wetter in %s am %s: %s", city, w.weatherstation_timestamp, w)
+    if options.update:
+        engine = create_engine('sqlite:///weather.db', echo=False)
+        Base.metadata.create_all(engine)
+
+        DBSession = sessionmaker(bind=engine)
+        session = DBSession()
+        #WeatherInfo.updateCities(session, quote_dropper.team2city.values())
+        session.commit()
+    else:
+        # History of OpenWeatherMap seems to start 3-Oct-2012
+        starttime = datetime(2012, 10, 3, 12, 30, 0)
+        endtime = datetime(2012, 10, 3, 13, 30, 0)
+
+        for city in ['Hamburg', 'Berlin', 'Freiburg']:
+            w = WeatherInfo.retrieveHistoricWeather(city, starttime, endtime)
+            if w:
+                logger.info("Wetter in %s am %s: %s", city, w.weatherstation_timestamp, w)

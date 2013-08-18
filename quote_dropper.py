@@ -59,15 +59,24 @@ def calc_weather_index(weather_info):
     return (temp_idx, humidity_idx, wind_idx)
 
 
+def str_weather_index(idx):
+    return "%.1f %.1f %.1f --> %.1f" % (idx[0], idx[1], idx[2], sum(idx))
+
+
 def convert_weather_indexes_to_goals(host_weather_idx, guest_weather_idx):
-    logger.info("  * Host  weather index in %40s: %s", team2city[host_team], host_weather_idx)
-    logger.info("  * Guest weather index in %40s: %s", team2city[guest_team], guest_weather_idx)
+    logger.info("  * Host  weather index in %40s: %s", team2city[host_team], str_weather_index(host_weather_idx))
+    logger.info("  * Guest weather index in %40s: %s", team2city[guest_team], str_weather_index(guest_weather_idx))
     relation = sum(host_weather_idx) / sum(guest_weather_idx) - 1.0
-    logger.info("   > %.3f", relation)
 
     # ~~ convert probability into match goals
     goals = "0:0"
-    if   relation < 0.05:
+    if   relation < -0.25:
+        goals = "0:3"
+    elif relation < -0.15:
+        goals = "0:2"
+    elif  relation < -0.05:
+        goals = "0:1"
+    elif   relation < 0.05:
         goals = "0:0"
     elif relation < 0.10:
         goals = "1:1"
@@ -76,10 +85,11 @@ def convert_weather_indexes_to_goals(host_weather_idx, guest_weather_idx):
     elif relation < 0.15:
         goals = "3:3"
     elif relation < 0.20:
-        goals = "1:0"
-    elif relation < 0.20:
-        goals = "1:0"
+        goals = "2:0"
+    elif relation < 0.30:
+        goals = "3:0"
 
+    logger.info("   --> %s (%.3f)", goals, relation)
     return goals
 
 
