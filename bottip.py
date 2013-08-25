@@ -4,6 +4,7 @@
 from datetime import date
 import json
 import logging
+from optparse import OptionParser
 
 import dateutil.parser
 import requests
@@ -97,37 +98,46 @@ def convert_weather_indexes_to_goals(host_weather_idx, guest_weather_idx):
 
 if __name__ == '__main__':
 
+    parser = OptionParser()
+    parser.add_option("-u", "--update",
+                      action="store_true", dest="update", default=False,
+                      help="update the current weather for all cities")
+    parser.add_option("-t", "--tip",
+                      action="store_true", dest="tip", default=False,
+                      help="send tip to botliga")
+    (options, args) = parser.parse_args()
+
     engine = create_engine('sqlite:///weather.db', echo=False)
     Base.metadata.create_all(engine)
 
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    all_games = json.loads(open('data/games_2013.json').read())
+    if options.update:
+        WeatherInfo.updateCities(session, team2city.values())
+        session.commit()
 
-    # ~~ get all games for today
-    for game in all_games:
-        d = dateutil.parser.parse(game['date'])
-        if d.date() == date.today():
+    if options.tip:
+        all_games = json.loads(open('data/games_2013.json').read())
 
-            host_team = game['hostName']
-            guest_team = game['guestName']
-            logger.info("%s:  %s : %s", d, host_team, guest_team)
+        # ~~ get all games for today
+        for game in all_games:
+            d = dateutil.parser.parse(game['date'])
+            if d.date() == date.today():
 
-            w_host = WeatherInfo.getLatest(session, team2city[host_team], date.today())
-            w_guest = WeatherInfo.getLatest(session, team2city[guest_team], date.today())
+                host_team = game['hostName']
+                guest_team = game['guestName']
+                logger.info("%s:  %s : %s", d, host_team, guest_team)
 
-            host_weather_idx = calc_weather_index(w_host)
-            guest_weather_idx = calc_weather_index(w_guest)
-            goals = convert_weather_indexes_to_goals(host_weather_idx, guest_weather_idx)
+                w_host = WeatherInfo.getLatest(session, team2city[host_team], date.today())
+                w_guest = WeatherInfo.getLatest(session, team2city[guest_team], date.today())
 
-            # ~~ post our guestimate
-            r = requests.post("http://botliga.de/api/guess",
-                              params={"match_id": game['id'], "result": goals, "token": my_secrets.BOTLIGA_API_TOKEN})
+                host_weather_idx = calc_weather_index(w_host)
+                guest_weather_idx = calc_weather_index(w_guest)
+                goals = convert_weather_indexes_to_goals(host_weather_idx, guest_weather_idx)
 
-            logger.info("Response from botliga: %s", r)
+                # ~~ post our guestimate
+                r = requests.post("http://botliga.de/api/guess",
+                                  params={"match_id": game['id'], "result": goals, "token": my_secrets.BOTLIGA_API_TOKEN})
 
-
-# ~~ once per day
-# WeatherInfo.updateCities(session, team2city.values())
-# session.commit()
+                logger.info("Response from botliga: %s", r)

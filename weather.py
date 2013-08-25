@@ -3,11 +3,8 @@
 
 from datetime import datetime, time
 import logging
-from optparse import OptionParser
 
 import requests
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, DateTime, desc
 
@@ -33,6 +30,7 @@ class WeatherInfo(Base):
     city = Column(String, index=True)
     summary = Column(String)
     icon = Column(String)
+    rain_1h = Column(Float)            # rain in recent 1 hour
     rain_3h = Column(Float)            # rain in recent 3 hours
     wind_speed = Column(Float)         # Wind speed in mps (m/s)
     wind_direction = Column(Float)     # Wind direction in degrees (meteorological)
@@ -82,7 +80,7 @@ class WeatherInfo(Base):
         headers = {"x-api-key": my_secrets.OPENWEATHERMAP_API_KEY}
 
         r = requests.get("http://api.openweathermap.org/data/2.5/find", params=params, headers=headers)
-        logger.info("Response", r)
+        #logger.info("Response", r)
         json = r.json()
         return convertOpenWeatherMap2WeatherInfo(city, json['list'][0])
 
@@ -97,14 +95,22 @@ class WeatherInfo(Base):
 # -- -- -- -- --
 
 
-def convertOpenWeatherMap2WeatherInfo(city, w, metric = True):
-    #json = {u'count': 1, u'message': u'accurate', u'list': [{u'clouds': {u'all': 75}, u'name': u'Hamburg', u'coord': {u'lat': 53.549999, u'lon': 10}, u'sys': {u'country': u'DE'}, u'weather': [{u'main': u'Clouds', u'id': 803, u'icon': u'04d', u'description': u'broken clouds'}], u'rain': {u'3h': 0.5}, u'dt': 1376211000, u'main': {u'pressure': 1016, u'temp_min': 15, u'temp_max': 20, u'temp': 17.35, u'humidity': 77}, u'id': 2911298, u'wind': {u'var_end': 290, u'var_beg': 220, u'speed': 5.7, u'deg': 260}}], u'cod': u'200'}
+def convertOpenWeatherMap2WeatherInfo(city, w, metric=True):
+    #json = {u'count': 1, u'message': u'accurate', u'list': [{u'clouds': {u'all': 75}, u'name': u'Hamburg',
+    # u'coord': {u'lat': 53.549999, u'lon': 10}, u'sys': {u'country': u'DE'},
+    # u'weather': [{u'main': u'Clouds', u'id': 803, u'icon': u'04d', u'description': u'broken clouds'}],
+    # u'rain': {u'3h': 0.5}, u'dt': 1376211000,
+    # u'main': {u'pressure': 1016, u'temp_min': 15, u'temp_max': 20, u'temp': 17.35, u'humidity': 77},
+    # u'id': 2911298, u'wind': {u'var_end': 290, u'var_beg': 220, u'speed': 5.7, u'deg': 260}}], u'cod': u'200'}
+    rain_1h = 0.0
     rain_3h = 0.0
     if 'rain' in w:
         if '3h' in w['rain']:
             rain_3h = w['rain']['3h']
+        elif '1h' in w['rain']:
+            rain_1h = w['rain']['1h']
         else:
-            logger.warn("rain has no 3h entry, but: %s", w['rain'])
+            logger.warn("rain has no 1h or 3h entry, but: %s", w['rain'])
 
     if not metric:
         w['main']['temp'] -= 273.15
@@ -112,7 +118,7 @@ def convertOpenWeatherMap2WeatherInfo(city, w, metric = True):
         w['main']['temp_max'] -= 273.15
 
     return WeatherInfo(city=city, summary=w['weather'][0]['description'], icon=w['weather'][0]['icon'],
-                       rain_3h=rain_3h,
+                       rain_1h=rain_1h, rain_3h=rain_3h,
                        temperature_cur=w['main']['temp'],
                        temperature_min=w['main']['temp_min'],
                        temperature_max=w['main']['temp_max'],
@@ -126,26 +132,11 @@ def convertOpenWeatherMap2WeatherInfo(city, w, metric = True):
 
 if __name__ == '__main__':
 
-    parser = OptionParser()
-    parser.add_option("-u", "--update",
-                      action="store_true", dest="update", default=False,
-                      help="update the current weather for all cities")
-    (options, args) = parser.parse_args()
+    # History of OpenWeatherMap seems to start 3-Oct-2012
+    starttime = datetime(2012, 10, 3, 12, 30, 0)
+    endtime = datetime(2012, 10, 3, 13, 30, 0)
 
-    if options.update:
-        engine = create_engine('sqlite:///weather.db', echo=False)
-        Base.metadata.create_all(engine)
-
-        DBSession = sessionmaker(bind=engine)
-        session = DBSession()
-        #WeatherInfo.updateCities(session, quote_dropper.team2city.values())
-        session.commit()
-    else:
-        # History of OpenWeatherMap seems to start 3-Oct-2012
-        starttime = datetime(2012, 10, 3, 12, 30, 0)
-        endtime = datetime(2012, 10, 3, 13, 30, 0)
-
-        for city in ['Hamburg', 'Berlin', 'Freiburg']:
-            w = WeatherInfo.retrieveHistoricWeather(city, starttime, endtime)
-            if w:
-                logger.info("Wetter in %s am %s: %s", city, w.weatherstation_timestamp, w)
+    for city in ['Hamburg', 'Berlin', 'Freiburg']:
+        w = WeatherInfo.retrieveHistoricWeather(city, starttime, endtime)
+        if w:
+            logger.info("Wetter in %s am %s: %s", city, w.weatherstation_timestamp, w)
