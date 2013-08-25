@@ -3,6 +3,7 @@
 my_secrets.py
 test.py
 scratchpad.py
+logs
 
 # IntelliJ IDEA project files
 *.ipr
