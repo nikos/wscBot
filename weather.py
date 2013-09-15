@@ -80,7 +80,7 @@ class WeatherInfo(Base):
         headers = {"x-api-key": my_secrets.OPENWEATHERMAP_API_KEY}
 
         r = requests.get("http://api.openweathermap.org/data/2.5/find", params=params, headers=headers)
-        #logger.info("Response", r)
+        logger.info("Response: %s", r)
         json = r.json()
         return convertOpenWeatherMap2WeatherInfo(city, json['list'][0])
 
