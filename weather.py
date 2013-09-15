@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, time
+import datetime
 import logging
+import time
 
 import requests
 from sqlalchemy.ext.declarative import declarative_base
@@ -50,8 +51,8 @@ class WeatherInfo(Base):
     def getLatest(session, city, date):
         """ Get most current weather record for given city and date
         """
-        start_date = datetime.combine(date, time(0, 0))
-        end_date = datetime.combine(date, time(23, 59, 59))
+        start_date = datetime.datetime.combine(date, datetime.time(0, 0))
+        end_date = datetime.datetime.combine(date, datetime.time(23, 59, 59))
         return session.query(WeatherInfo) \
             .filter_by(city=city) \
             .filter(WeatherInfo.retrieved_at.between(start_date, end_date)) \
@@ -91,6 +92,7 @@ class WeatherInfo(Base):
             weather = WeatherInfo.retrieveCurrentWeather(city)
             logger.info("   %s ", weather)
             session.add(weather)
+            time.sleep(2)
 
 # -- -- -- -- --
 
@@ -125,7 +127,7 @@ def convertOpenWeatherMap2WeatherInfo(city, w, metric=True):
                        pressure=w['main']['pressure'] if 'pressure' in w['main'] else 0.0,
                        humidity=w['main']['humidity'] if 'humidity' in w['main'] else 0.0,
                        wind_speed=w['wind']['speed'], wind_direction=w['wind']['deg'],
-                       weatherstation_timestamp=datetime.fromtimestamp(w['dt']), retrieved_at=datetime.now())
+                       weatherstation_timestamp=datetime.datetime.fromtimestamp(w['dt']), retrieved_at=datetime.datetime.now())
 
 
 # -----------------------------------------------------------------------------
@@ -133,8 +135,8 @@ def convertOpenWeatherMap2WeatherInfo(city, w, metric=True):
 if __name__ == '__main__':
 
     # History of OpenWeatherMap seems to start 3-Oct-2012
-    starttime = datetime(2012, 10, 3, 12, 30, 0)
-    endtime = datetime(2012, 10, 3, 13, 30, 0)
+    starttime = datetime.datetime(2012, 10, 3, 12, 30, 0)
+    endtime = datetime.datetime(2012, 10, 3, 13, 30, 0)
 
     for city in ['Hamburg', 'Berlin', 'Freiburg']:
         w = WeatherInfo.retrieveHistoricWeather(city, starttime, endtime)
